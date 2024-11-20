@@ -99,14 +99,24 @@ def publish_to_mqtt(client, topic, payload):
     except Exception as e:
         print(f"MQTT exception: {e}")
 
+def reconnect_mqtt(client, broker, port):
+    """Reconnect to MQTT broker."""
+    try:
+        client.connect(broker, port)
+        print(f"Reconnected to MQTT broker at {broker}:{port}")
+    except Exception as e:
+        print(f"Failed to reconnect to MQTT broker: {e}")
+        time.sleep(5)  # Wait before trying to reconnect
+
 
 # Main function
 if __name__ == "__main__":
-    try:
-        mqtt_client.connect(MQTT_BROKER, MQTT_PORT)
-        print(f"Connected to MQTT broker at {MQTT_BROKER}:{MQTT_PORT}")
-       
-        while True:
+    while True:
+        try:
+            if not mqtt_client.is_connected():
+                print("MQTT client is not connected. Attempting to connect...")
+                reconnect_mqtt(mqtt_client, MQTT_BROKER, MQTT_PORT)
+        
             values = []
             for reg_address in REG_ADDRESSES:
                 value = read_meter_float(modbus_client, reg_address)
@@ -120,12 +130,12 @@ if __name__ == "__main__":
             publish_to_mqtt(mqtt_client, MQTT_TOPIC, payload)
             time.sleep(15)
 
-    except KeyboardInterrupt:
-        print("Program terminated by user.")
+        except KeyboardInterrupt:
+            print("Program terminated by user.")
 
-    except Exception as e:
-        print(f"Unexpected error: {e}")
+        except Exception as e:
+            print(f"Unexpected error: {e}")
 
-    finally:
-        mqtt_client.disconnect()
-        print("Connections closed.")
+        finally:
+            mqtt_client.disconnect()
+            print("Connections closed.")
