@@ -44,38 +44,36 @@ def hex_to_float(value):
         return 0.0  # Return a default value if conversion fails
 
 
-def read_meter_float(address, name):
-    """Read a 32-bit floating-point value from a Modbus register."""
-    # client = ModbusTcpClient(MODBUS_HOST, port=MODBUS_PORT)
+
+def read_modbus_register(address, name):
+    # Connect to the Modbus TCP server
+    client = ModbusTcpClient(MODBUS_HOST, port=MODBUS_PORT)
 
     try:
-        if modbus_client.connect():
+        if client.connect():
             print(f"Connected to Modbus server at {MODBUS_HOST}:{MODBUS_PORT}")
 
-            # Read two registers (32 bits)
-            response = modbus_client.read_holding_registers(address, 2)
+            # Read a single register
+            response = client.read_holding_registers(address, 2)
             if response.isError():
                 print(f"Error reading {name} register at address {address}: {response}")
             else:
-                # Combine two 16-bit registers into a single 32-bit integer
-                high, low = response.registers 
-                # high = 18821 
-                # low = 16704
-                value = (high << 16) | low
-                # Convert the 32-bit integer to a float
+                # Display the register value
+                high, low = response.registers
+                value = (high << 16) | low  
                 float_value = hex_to_float(value)
-                print(f"{name} value at address {address}: {round(float_value,2)}")
-                return round(float_value,2)
+                float_value = round(float_value, 2)
 
+                print(f"{name} value at address {address}: {float_value}")
         else:
             print(f"Failed to connect to Modbus server at {MODBUS_HOST}:{MODBUS_PORT}")
-            return 0
 
     except ModbusException as e:
         print(f"Modbus exception: {e}")
 
     finally:
-        # client.close()
+        # Close the connection
+        client.close()
         print("Connection closed.")
 
 
@@ -122,7 +120,7 @@ if __name__ == "__main__":
         
             values = []
             for reg_address in REG_ADDRESSES:
-                value = read_meter_float(modbus_client, reg_address)
+                value = read_modbus_register(modbus_client, reg_address)
                 if value is not None:
                     values.append(value)  # Round to 2 decimal places
                 else:
