@@ -8,7 +8,7 @@ MODBUS_HOST = "192.168.2.10"  # Replace with your Modbus server IP
 MODBUS_PORT = 502             # Default Modbus TCP port
 
 # Define global Modbus addresses
-STEAM_TOTAL = 131  # Replace with the register address for temperature
+STEAM_TOTAL = 130  # Replace with the register address for temperature
 STEAM_PRESS = 5         # Replace with the register address for flow
 STEAM_FLOW =  15
 UNIT_ID = 1              # Modbus unit ID (commonly 1)
@@ -39,9 +39,17 @@ def read_modbus_register(address, name):
             else:
                 # Display the register value
                 high, low = response.registers
-                value = (high << 16) | low  
-                float_value = hex_to_float(value)
-                float_value = round(float_value, 2)
+                print("response registers: {}".format(response.registers))
+                print("high: {}".format(high))
+                print("low: {}".format(low))
+                if address == STEAM_TOTAL:
+                    value = (low << 16) | high  
+                    float_value = hex_to_float(value)
+                    float_value = round(float_value, 2)
+                else:
+                    value = (high << 16) | low  
+                    float_value = hex_to_float(value)
+                    float_value = round(float_value, 2)
 
                 print(f"{name} value at address {address}: {float_value}")
         else:
@@ -59,8 +67,10 @@ def read_modbus_register(address, name):
 if __name__ == "__main__":
     # Read temperature and flow values
     while True: 
-        read_modbus_register(STEAM_FLOW, "Steam flow kg/h")  
+        read_modbus_register(STEAM_FLOW, "Steam flow kg/h")
+        time.sleep(1)  
         read_modbus_register(STEAM_TOTAL, "Total Steam kg")
+        time.sleep(1)
         read_modbus_register(STEAM_PRESS, "Steam Press Bar(g)")
         time.sleep(5)
 

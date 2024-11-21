@@ -24,7 +24,7 @@ MODBUS_HOST = "192.168.2.10"  # Replace with your Modbus server IP
 MODBUS_PORT = 502             # Default Modbus TCP port
 
 # Define global Modbus addresses
-STEAM_TOTAL = 131  # Replace with the register address for temperature
+STEAM_TOTAL = 130  # Replace with the register address for temperature
 STEAM_PRESS = 5         # Replace with the register address for flow
 STEAM_FLOW =  15
 
@@ -61,6 +61,12 @@ def read_modbus_register(address):
             else:
                 # Display the register value
                 high, low = response.registers
+                if address == STEAM_TOTAL:
+                    value = (low << 16) | high  
+                    float_value = hex_to_float(value)
+                    float_value = round(float_value, 2)
+                    return float_value
+                
                 value = (high << 16) | low  
                 float_value = hex_to_float(value)
                 float_value = round(float_value, 2)
