@@ -63,8 +63,8 @@ def read_modbus_register(address, name):
                 value = (high << 16) | low  
                 float_value = hex_to_float(value)
                 float_value = round(float_value, 2)
-
                 print(f"{name} value at address {address}: {float_value}")
+                return float_value
         else:
             print(f"Failed to connect to Modbus server at {MODBUS_HOST}:{MODBUS_PORT}")
 
