@@ -83,7 +83,7 @@ def get_ntp_datetime(ntp_server="time.google.com"):
         response = client.request(ntp_server, version=3)
         ntp_time = datetime.fromtimestamp(response.tx_time, tz=timezone.utc)
         local_time = ntp_time + timedelta(hours=6)
-        return local_time.strftime("%d-%m-%Y %H:%M:%S")
+        return local_time.strftime("%H:%M:%S %d-%m-%Y")
     
     except Exception as e:
         print(f"Error fetching NTP time: {e}")
@@ -121,11 +121,12 @@ if __name__ == "__main__":
             values = []
             for reg_address in REG_ADDRESSES:
                 value = read_modbus_register(modbus_client, reg_address)
+                
                 if value is not None:
                     values.append(value)  # Round to 2 decimal places
                 else:
                     values.append(0)  # Placeholder for failed reads
-
+            print(values)
             date_time = get_ntp_datetime()
             payload = f"{DEVICE_ID}|{DEVICE_TYPE_ID}|{date_time}|" + "|".join(map(str, values))
             publish_to_mqtt(mqtt_client, MQTT_TOPIC, payload)
