@@ -9,6 +9,7 @@ from datetime import datetime, timezone, timedelta
 
 DEVICE_ID = "5018"
 DEVICE_TYPE_ID = "103"
+INTERVAL = 60 # 60 seconds
 
 # MQTT broker details
 MQTT_BROKER = "epiciotmqtt.suffixit.com"  # Replace with your MQTT broker address
@@ -45,7 +46,7 @@ def hex_to_float(value):
 
 
 
-def read_modbus_register(address, name):
+def read_modbus_register(address):
     # Connect to the Modbus TCP server
     client = ModbusTcpClient(MODBUS_HOST, port=MODBUS_PORT)
 
@@ -56,14 +57,13 @@ def read_modbus_register(address, name):
             # Read a single register
             response = client.read_holding_registers(address, 2)
             if response.isError():
-                print(f"Error reading {name} register at address {address}: {response}")
+                print(f"Error reading {address} register at address {address}: {response}")
             else:
                 # Display the register value
                 high, low = response.registers
                 value = (high << 16) | low  
                 float_value = hex_to_float(value)
                 float_value = round(float_value, 2)
-                print(f"{name} value at address {address}: {float_value}")
                 return float_value
         else:
             print(f"Failed to connect to Modbus server at {MODBUS_HOST}:{MODBUS_PORT}")
@@ -120,8 +120,8 @@ if __name__ == "__main__":
         
             values = []
             for reg_address in REG_ADDRESSES:
-                value = read_modbus_register(modbus_client, reg_address)
-                
+                print(reg_address)
+                value = read_modbus_register(reg_address)
                 if value is not None:
                     values.append(value)  # Round to 2 decimal places
                 else:
@@ -130,7 +130,7 @@ if __name__ == "__main__":
             date_time = get_ntp_datetime()
             payload = f"{DEVICE_ID}|{DEVICE_TYPE_ID}|{date_time}|" + "|".join(map(str, values))
             publish_to_mqtt(mqtt_client, MQTT_TOPIC, payload)
-            time.sleep(15)
+            time.sleep(INTERVAL)
 
         except KeyboardInterrupt:
             print("Program terminated by user.")
