@@ -64,6 +64,7 @@ def read_meter_float(address, name):
                 value = (high << 16) | low
                 # Convert the 32-bit integer to a float
                 float_value = hex_to_float(value)
+                print(f"{name} value at address {address}: {round(float_value,2)}")
                 return round(float_value,2)
 
         else:
