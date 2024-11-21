@@ -4,7 +4,7 @@ import time
 import struct
 import paho.mqtt.client as mqtt
 import ntplib
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 
 DEVICE_ID = "5018"
@@ -23,11 +23,11 @@ MODBUS_HOST = "192.168.2.10"  # Replace with your Modbus server IP
 MODBUS_PORT = 502             # Default Modbus TCP port
 
 # Define global Modbus addresses
-TEMPERATURE_ADDRESS = 4  # Replace with the register address for temperature
-FLOW_ADDRESS = 5         # Replace with the register address for flow
-TOTAL_STEAM_ADDRESS = 131
+STEAM_TOTAL = 131  # Replace with the register address for temperature
+STEAM_PRESS = 5         # Replace with the register address for flow
+STEAM_FLOW =  15
 
-REG_ADDRESSES = [TEMPERATURE_ADDRESS, FLOW_ADDRESS, TOTAL_STEAM_ADDRESS]  # Replace with actual register addresses
+REG_ADDRESSES = [STEAM_FLOW, STEAM_PRESS, STEAM_TOTAL]  # Replace with actual register addresses
 TOTAL_OF_REG = len(REG_ADDRESSES)
 
 
@@ -37,7 +37,11 @@ mqtt_client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
 
 def hex_to_float(value):
     """Convert a 32-bit integer to a float."""
-    return struct.unpack('>f', struct.pack('>I', value))[0]
+    try:
+        return struct.unpack('>f', struct.pack('>I', int(value)))[0]
+    except (TypeError, ValueError, struct.error) as e:
+        print(f"Error converting value {value} to float: {e}")
+        return 0.0  # Return a default value if conversion fails
 
 
 def read_meter_float(address, name):
@@ -53,17 +57,14 @@ def read_meter_float(address, name):
             if response.isError():
                 print(f"Error reading {name} register at address {address}: {response}")
             else:
-                if address == TOTAL_STEAM_ADDRESS:
-                    # Combine two 16-bit registers into a single 32-bit integer
-                    high, low = response.registers 
-                    # high = 18821 
-                    # low = 16704
-                    value = (high << 16) | low
-                    # Convert the 32-bit integer to a float
-                    float_value = hex_to_float(value)
-                    return float_value
-                else:
-                    return hex_to_float(value)
+                # Combine two 16-bit registers into a single 32-bit integer
+                high, low = response.registers 
+                # high = 18821 
+                # low = 16704
+                value = (high << 16) | low
+                # Convert the 32-bit integer to a float
+                float_value = hex_to_float(value)
+                return round(float_value,2)
 
         else:
             print(f"Failed to connect to Modbus server at {MODBUS_HOST}:{MODBUS_PORT}")
@@ -82,7 +83,8 @@ def get_ntp_datetime(ntp_server="time.google.com"):
         client = ntplib.NTPClient()
         response = client.request(ntp_server, version=3)
         ntp_time = datetime.fromtimestamp(response.tx_time, tz=timezone.utc)
-        return ntp_time.strftime("%d-%m-%Y %H:%M:%S")
+        local_time = ntp_time + timedelta(hours=6)
+        return local_time.strftime("%d-%m-%Y %H:%M:%S")
     
     except Exception as e:
         print(f"Error fetching NTP time: {e}")
@@ -121,7 +123,7 @@ if __name__ == "__main__":
             for reg_address in REG_ADDRESSES:
                 value = read_meter_float(modbus_client, reg_address)
                 if value is not None:
-                    values.append(round(value, 2))  # Round to 2 decimal places
+                    values.append(value)  # Round to 2 decimal places
                 else:
                     values.append(0)  # Placeholder for failed reads
 
