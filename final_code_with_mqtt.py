@@ -7,8 +7,8 @@ import ntplib
 from datetime import datetime, timezone
 
 
-DEVICE_ID = "6020"
-DEVICE_TYPE_ID = "104"
+DEVICE_ID = "5018"
+DEVICE_TYPE_ID = "103"
 
 # MQTT broker details
 MQTT_BROKER = "epiciotmqtt.suffixit.com"  # Replace with your MQTT broker address
