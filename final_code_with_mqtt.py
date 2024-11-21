@@ -28,7 +28,7 @@ STEAM_TOTAL = 131  # Replace with the register address for temperature
 STEAM_PRESS = 5         # Replace with the register address for flow
 STEAM_FLOW =  15
 
-REG_ADDRESSES = [STEAM_FLOW, STEAM_PRESS, STEAM_TOTAL]  # Replace with actual register addresses
+REG_ADDRESSES = [STEAM_TOTAL, STEAM_FLOW, STEAM_PRESS]  # Replace with actual register addresses
 TOTAL_OF_REG = len(REG_ADDRESSES)
 
 
